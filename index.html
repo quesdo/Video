@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vidéo Synchronisée</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:">
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAERERERERERERAAAAAAAAERAQAAAAAAEBEAEAAAAAEAEQABAAAAEAARAAAQAAEAABEAAAEAEAAAEQAAABEAAAARAAAAEQAAABEAAAEAEAAAEQAAEAABAAAQAAEAEQABAAAAAQABEAEAAAAAEAEQEAAAAAABEREREREREREAAAAAAAAERERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA">
     <style>
         * {
             margin: 0;
@@ -28,10 +28,10 @@
             z-index: 1000;
         }
         
-        video {
+        iframe {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            border: none;
             background: #000;
         }
 
@@ -51,17 +51,19 @@
 </head>
 <body>
     <div id="videoContainer">
-        <video id="videoPlayer" preload="auto">
-            <source src="https://drive.google.com/uc?export=download&id=1jiD0I4Ma9u0ToMwAxPWBF1PSRjXTHqEh" type="video/mp4">
-        </video>
+        <iframe 
+            src="https://drive.google.com/file/d/1jiD0I4Ma9u0ToMwAxPWBF1PSRjXTHqEh/preview" 
+            allow="autoplay; fullscreen"
+            allowfullscreen>
+        </iframe>
     </div>
     <div class="status">
-        <span id="status">Chargement...</span>
+        <span id="statusText">Chargement...</span>
     </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js';
-        import { getDatabase, ref, set, onValue, serverTimestamp, get } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js';
+        import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAr7CBjRgHScfCV5q8BHj9kYVwfvD9B-JQ",
@@ -73,114 +75,51 @@
             appId: "1:350569938685:web:38c9fbb279871f32c28894"
         };
 
+        // Fonction pour gérer les messages de statut
+        const showStatus = (message) => {
+            const statusElement = document.getElementById('statusText');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.style.opacity = '1';
+                setTimeout(() => {
+                    statusElement.style.opacity = '0';
+                }, 3000);
+            }
+        };
+
+        // Initialisation de Firebase
         try {
             const app = initializeApp(firebaseConfig);
             const db = getDatabase(app);
-            const videoRef = ref(db, 'video-state');
-            const video = document.getElementById('videoPlayer');
-            let isSeeking = false;
-            let lastUpdate = 0;
+            const syncRef = ref(db, 'video-sync');
 
-            function updateStatus(message) {
-                const status = document.getElementById('status');
-                status.textContent = message;
-                status.style.opacity = '1';
-                setTimeout(() => {
-                    status.style.opacity = '0';
-                }, 3000);
-            }
-
-            async function updateVideoState(state) {
-                try {
-                    await set(videoRef, {
-                        ...state,
-                        timestamp: Date.now(),
-                        currentTime: video.currentTime
-                    });
-                } catch (error) {
-                    console.error('Erreur de mise à jour:', error);
-                }
-            }
-
-            // Événements vidéo
-            video.addEventListener('play', () => {
-                if (!isSeeking) {
-                    updateVideoState({ status: 'playing' });
-                    updateStatus('Lecture en cours');
+            // Écoute des changements dans la base de données
+            onValue(syncRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    showStatus(`État: ${data.status || 'connecté'}`);
                 }
             });
 
-            video.addEventListener('pause', () => {
-                if (!isSeeking) {
-                    updateVideoState({ status: 'paused' });
-                    updateStatus('Vidéo en pause');
-                }
-            });
-
-            video.addEventListener('seeking', () => {
-                isSeeking = true;
-                updateVideoState({ 
-                    status: 'seeking',
-                    seekTime: video.currentTime
-                });
-            });
-
-            video.addEventListener('seeked', () => {
-                isSeeking = false;
-                updateVideoState({ 
-                    status: video.paused ? 'paused' : 'playing',
-                    currentTime: video.currentTime
-                });
-            });
-
-            // Synchronisation
-            onValue(videoRef, (snapshot) => {
-                const state = snapshot.val();
-                if (!state || Date.now() - lastUpdate < 500) return;
-                lastUpdate = Date.now();
-
-                try {
-                    if (Math.abs(video.currentTime - state.currentTime) > 0.5) {
-                        video.currentTime = state.currentTime;
-                    }
-
-                    if (state.status === 'playing' && video.paused) {
-                        video.play();
-                        updateStatus('Lecture synchronisée');
-                    } else if (state.status === 'paused' && !video.paused) {
-                        video.pause();
-                        updateStatus('Pause synchronisée');
-                    } else if (state.status === 'seeking') {
-                        video.currentTime = state.seekTime;
-                    }
-                } catch (error) {
-                    console.error('Erreur de synchronisation:', error);
-                }
-            });
-
-            // Vérification initiale
-            const initialState = await get(videoRef);
-            if (initialState.exists()) {
-                const state = initialState.val();
-                video.currentTime = state.currentTime || 0;
-                if (state.status === 'playing') {
-                    video.play();
-                }
-            }
-
-            updateStatus('Prêt à la lecture synchronisée');
+            // Message initial
+            showStatus('Connecté au service de synchronisation');
 
         } catch (error) {
             console.error('Erreur d\'initialisation:', error);
-            updateStatus('Erreur de connexion');
+            showStatus('Erreur de connexion');
         }
 
-        // Double-clic pour le plein écran
+        // Gestion du plein écran
         document.addEventListener('dblclick', () => {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            } else {
-                document.documentElement.requestFullscreen();
+            try {
+                const container = document.getElementById('videoContainer');
+                if (!document.fullscreenElement) {
+                    container.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            } catch (error) {
+                console.error('Erreur de plein écran:', error);
             }
         });
     </script>

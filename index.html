@@ -14,7 +14,7 @@
         body, html {
             width: 100%;
             height: 100%;
-            background-color: #000;
+            background-color: white;
         }
 
         #playButton {
@@ -22,26 +22,29 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #4CAF50;
+            background: #007BB7; /* Couleur bleue */
             color: white;
             border: none;
-            padding: 30px 60px;
-            border-radius: 10px;
+            padding: 20px 50px;
+            border-radius: 50px;
             cursor: pointer;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(0, 123, 183, 0.5);
+            transition: background 0.3s ease, transform 0.3s ease;
             z-index: 1000;
         }
 
         #playButton:hover {
-            background: #45a049;
+            background: #005FAB; /* Couleur bleue plus foncée au survol */
         }
 
         #resetButton {
             position: fixed;
             bottom: 10px;
             right: 10px;
-            background: #666;
+            background: #333;
             color: white;
             border: none;
             padding: 8px 15px;
@@ -65,7 +68,7 @@
     </style>
 </head>
 <body>
-    <button id="playButton">LANCER LA VIDÉO</button>
+    <button id="playButton">As IS Line</button>
     <button id="resetButton">Reset</button>
     <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen></iframe>
 
@@ -92,15 +95,13 @@
         const resetButton = document.getElementById('resetButton');
         const videoFrame = document.getElementById('videoFrame');
 
-        // URL YouTube avec paramètres
-        const videoUrl = "https://www.youtube.com/embed/jCuDbKqSs-M?autoplay=1&controls=0&modestbranding=1&rel=0";
+        const videoUrl = "https://www.youtube.com/embed/jCuDbKqSs-M?autoplay=1&controls=0&modestbranding=1&rel=0&vq=hd1080"; // Vidéo en qualité 1080p (HD)
 
         function startVideo() {
             videoFrame.src = videoUrl;
             videoFrame.style.display = 'block';
             playButton.style.display = 'none';
 
-            // Basculer en plein écran automatiquement
             if (videoFrame.requestFullscreen) {
                 videoFrame.requestFullscreen();
             } else if (videoFrame.webkitRequestFullscreen) {
@@ -116,16 +117,18 @@
             playButton.style.display = 'block';
         }
 
-        // Événements des boutons
         playButton.addEventListener('click', () => {
-            set(videoRef, { action: 'play' });
+            playButton.style.transform = 'scale(0.9)';  // Réduire le bouton
+            setTimeout(() => {
+                playButton.style.transform = 'scale(1)';  // Restaurer la taille originale
+                set(videoRef, { action: 'play' });
+            }, 300);  // Durée de réduction
         });
 
         resetButton.addEventListener('click', () => {
             set(videoRef, { action: 'reset' });
         });
 
-        // Écoute Firebase
         onValue(videoRef, (snapshot) => {
             const data = snapshot.val();
             if (!data) return;

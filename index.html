@@ -56,21 +56,18 @@
             opacity: 1;
         }
 
-        video {
+        iframe {
             width: 100%;
             height: 100vh;
+            border: none;
             display: none;
-            background: black;
         }
     </style>
 </head>
 <body>
     <button id="playButton">LANCER LA VIDÉO</button>
     <button id="resetButton">Reset</button>
-    <video id="videoPlayer" controls>
-        <source src="video.mp4" type="video/mp4">
-        Votre navigateur ne supporte pas la lecture vidéo.
-    </video>
+    <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen></iframe>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js';
@@ -81,40 +78,49 @@
             authDomain: "videosynch-30d07.firebaseapp.com",
             databaseURL: "https://videosynch-30d07-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "videosynch-30d07",
-            storageBucket: "videosynch-30d07.firebasestorage.app",
+            storageBucket: "videosynch-30d07.appspot.com",
             messagingSenderId: "350569938685",
             appId: "1:350569938685:web:38c9fbb279871f32c28894"
         };
 
-        // Initialisation Firebase
+        // Initialisation de Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const videoRef = ref(db, 'video-sync');
 
         const playButton = document.getElementById('playButton');
         const resetButton = document.getElementById('resetButton');
-        const videoPlayer = document.getElementById('videoPlayer');
+        const videoFrame = document.getElementById('videoFrame');
+        const videoUrl = "https://player.vimeo.com/video/1044942414?autoplay=1";
 
         function startVideo() {
-            videoPlayer.style.display = 'block';
-            videoPlayer.play();
+            videoFrame.src = videoUrl;
+            videoFrame.style.display = 'block';
             playButton.style.display = 'none';
+
+            // Basculer en plein écran automatiquement
+            if (videoFrame.requestFullscreen) {
+                videoFrame.requestFullscreen();
+            } else if (videoFrame.webkitRequestFullscreen) {
+                videoFrame.webkitRequestFullscreen();
+            } else if (videoFrame.msRequestFullscreen) {
+                videoFrame.msRequestFullscreen();
+            }
         }
 
         function resetVideo() {
-            videoPlayer.pause();
-            videoPlayer.currentTime = 0;
-            videoPlayer.style.display = 'none';
+            videoFrame.src = '';
+            videoFrame.style.display = 'none';
             playButton.style.display = 'block';
         }
 
         // Événements des boutons
         playButton.addEventListener('click', () => {
-            set(videoRef, { action: 'play', timestamp: Date.now() });
+            set(videoRef, { action: 'play' });
         });
 
         resetButton.addEventListener('click', () => {
-            set(videoRef, { action: 'reset', timestamp: Date.now() });
+            set(videoRef, { action: 'reset' });
         });
 
         // Écoute Firebase

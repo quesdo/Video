@@ -77,13 +77,13 @@
         import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js';
 
         const firebaseConfig = {
-            apiKey: "YOUR_FIREBASE_API_KEY",
-            authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
-            databaseURL: "YOUR_FIREBASE_DATABASE_URL",
-            projectId: "YOUR_FIREBASE_PROJECT_ID",
-            storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
-            appId: "YOUR_FIREBASE_APP_ID"
+            apiKey: "AIzaSyAr7CBjRgHScfCV5q8BHj9kYVwfvD9B-JQ",
+            authDomain: "videosynch-30d07.firebaseapp.com",
+            databaseURL: "https://videosynch-30d07-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "videosynch-30d07",
+            storageBucket: "videosynch-30d07.appspot.com",
+            messagingSenderId: "350569938685",
+            appId: "1:350569938685:web:38c9fbb279871f32c28894"
         };
 
         // Initialisation Firebase
@@ -95,7 +95,7 @@
         const resetButton = document.getElementById('resetButton');
         const videoFrame = document.getElementById('videoFrame');
 
-        const videoUrl = "https://www.youtube.com/embed/jCuDbKqSs-M?autoplay=1&mute=1"; // Vidéo YouTube avec autoplay sans son
+        const videoUrl = "https://www.youtube.com/embed/jCuDbKqSs-M?autoplay=1&controls=0&modestbranding=1&rel=0";
 
         function startVideo() {
             videoFrame.src = videoUrl;

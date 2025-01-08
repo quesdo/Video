@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidéo Synchronisée</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+        }
+        
+        #videoContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #000;
+        }
+
+        .status {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div id="videoContainer">
+        <iframe 
+            src="https://drive.google.com/file/d/1jiD0I4Ma9u0ToMwAxPWBF1PSRjXTHqEh/preview?hd=1" 
+            allow="autoplay; fullscreen" 
+            allowfullscreen
+            seamless>
+        </iframe>
+    </div>
+    <div class="status">
+        <span id="status">Chargement...</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAr7CBjRgHScfCV5q8BHj9kYVwfvD9B-JQ",
+            authDomain: "videosynch-30d07.firebaseapp.com",
+            databaseURL: "https://videosynch-30d07-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "videosynch-30d07",
+            storageBucket: "videosynch-30d07.firebasestorage.app",
+            messagingSenderId: "350569938685",
+            appId: "1:350569938685:web:38c9fbb279871f32c28894"
+        };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getDatabase(app);
+            const videoRef = ref(db, 'video-status');
+
+            // Fonction pour mettre à jour le statut
+            function updateStatus(message) {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                // Cache le statut après 3 secondes
+                setTimeout(() => {
+                    status.style.opacity = '0';
+                    setTimeout(() => status.style.display = 'none', 1000);
+                }, 3000);
+            }
+
+            // Écoute des changements dans Firebase
+            onValue(videoRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    updateStatus(`État de lecture: ${data.status}`);
+                }
+            });
+
+            // Message initial
+            updateStatus('Vidéo prête');
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            updateStatus('Erreur de connexion');
+        }
+
+        // Gestion du plein écran au clic
+        document.addEventListener('click', () => {
+            const iframe = document.querySelector('iframe');
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.webkitRequestFullscreen) {
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) {
+                iframe.msRequestFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

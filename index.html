@@ -1,158 +1,144 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Controls</title>
+    <title>Vidéo Synchronisée</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: #f5f5f5;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .controls-container {
+
+        body, html {
+            width: 100%;
+            height: 100%;
             background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .control-button {
-            padding: 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background-color: #005386;
+
+        #playButton {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #007BB7; /* Couleur bleue */
             color: white;
+            border: none;
+            padding: 20px 50px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(0, 123, 183, 0.5);
+            transition: background 0.3s ease, transform 0.3s ease;
+            z-index: 1000;
         }
-        .control-button:hover {
-            background-color: #003d61;
+
+        #playButton:hover {
+            background: #005FAB; /* Couleur bleue plus foncée au survol */
         }
-        .control-button.active {
-            background-color: #00ff00;
+
+        #resetButton {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #333;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.7;
+            z-index: 1000;
         }
-        h2 {
-            color: #005386;
-            margin-bottom: 20px;
+
+        #resetButton:hover {
+            opacity: 1;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100vh;
+            border: none;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="controls-container">
-        <h2>3D Element Controls</h2>
-        <div class="button-grid">
-            <button id="toBeStationsBtn" class="control-button" onclick="handleToBeStations()">
-                🔧 ToBeStations
-            </button>
-            <button id="ghostBtn" class="control-button" onclick="handleGhost()">
-                👻 videoleader
-            </button>
-            <button id="webpageBtn" class="control-button" onclick="handleWebPage()">
-                🌐 WebPage
-            </button>
-            <button id="kpisBtn" class="control-button" onclick="handleKPIs()">
-                📈 KPIs
-            
-            <button id="animBtn" class="control-button" onclick="handleAnimation()">
-                🎬 Animation
-            </button>
-        </div>
-    </div>
+    <button id="playButton">As IS Line</button>
+    <button id="resetButton">Reset</button>
+    <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen></iframe>
 
-    <script>
-        // Fonction pour envoyer un message de visibilité
-        function toggleVisibility(actorName, visible) {
-            window.parent.postMessage(JSON.stringify({
-                action: "toggleVisibility",
-                actor: actorName,
-                visible: visible
-            }), "*");
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+            databaseURL: "YOUR_FIREBASE_DATABASE_URL",
+            projectId: "YOUR_FIREBASE_PROJECT_ID",
+            storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+            appId: "YOUR_FIREBASE_APP_ID"
+        };
+
+        // Initialisation Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const videoRef = ref(db, 'video-sync');
+
+        const playButton = document.getElementById('playButton');
+        const resetButton = document.getElementById('resetButton');
+        const videoFrame = document.getElementById('videoFrame');
+
+        const videoUrl = "https://www.youtube.com/embed/jCuDbKqSs-M?autoplay=1&mute=1"; // Vidéo YouTube avec autoplay sans son
+
+        function startVideo() {
+            videoFrame.src = videoUrl;
+            videoFrame.style.display = 'block';
+            playButton.style.display = 'none';
+
+            if (videoFrame.requestFullscreen) {
+                videoFrame.requestFullscreen();
+            } else if (videoFrame.webkitRequestFullscreen) {
+                videoFrame.webkitRequestFullscreen();
+            } else if (videoFrame.msRequestFullscreen) {
+                videoFrame.msRequestFullscreen();
+            }
         }
 
-        let dollhouseActive = false;
-        let toBeStationsActive = false;
-        let webPageActive = false;
-        let toBeLineActive = false;
-        let kpisActive = false;
-        let ghostActive = false;
-
-        // Fonction pour ToBeStations
-        function handleToBeStations() {
-            toBeStationsActive = !toBeStationsActive;
-            document.getElementById('toBeStationsBtn').classList.toggle('active');
-            toggleVisibility("ASISLine", false);
-            toggleVisibility("ToBeStations", true);
+        function resetVideo() {
+            videoFrame.src = '';
+            videoFrame.style.display = 'none';
+            playButton.style.display = 'block';
         }
 
-        // Fonction pour Ghost
-        function handleGhost() {
-            ghostActive = !ghostActive;
-            document.getElementById('ghostBtn').classList.toggle('active');
-            toggleVisibility("WebVideo", false);
-        }
+        playButton.addEventListener('click', () => {
+            playButton.style.transform = 'scale(0.9)';  // Réduire le bouton
+            setTimeout(() => {
+                playButton.style.transform = 'scale(1)';  // Restaurer la taille originale
+                set(videoRef, { action: 'play' });
+            }, 300);  // Durée de réduction
+        });
 
-        // Fonction pour WebPage
-        function handleWebPage() {
-            webPageActive = !webPageActive;
-            document.getElementById('webpageBtn').classList.toggle('active');
-            toggleVisibility("UShape_Ghost", false);
-            toggleVisibility("Dollhouse", false);
-            toggleVisibility("TO BE LINE", true);
-            toggleVisibility("WebpageKPIs", false);
-            toggleVisibility("WebpageLevers", false);
-            toggleVisibility("WebpageW", false);
-        }
+        resetButton.addEventListener('click', () => {
+            set(videoRef, { action: 'reset' });
+        });
 
-        // Fonction pour KPIs
-        function handleKPIs() {
-            kpisActive = !kpisActive;
-            document.getElementById('kpisBtn').classList.toggle('active');
-			toggleVisibility("WebpageKPIsTOBE", true);
-        }
+        onValue(videoRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
 
-        // Fonction pour Dollhouse
-        function handleDollhouse() {
-            dollhouseActive = !dollhouseActive;
-            document.getElementById('dollhouseBtn').classList.toggle('active');
-            toggleVisibility("WebpageKPIsTOBE", true);
-            toggleVisibility("Dollhouse", false);
-            toggleVisibility("TO BE LINE", true);
-			const message = {
-                action: "playAnimation",
-                actor: "TOBELine",
-                animation: "NewLoop"
-            };
-            toggleVisibility("WebpageKPIs", false);
-            toggleVisibility("WebpageLevers", false);
-            toggleVisibility("WebpageW", false);
-        }
-
-        // Fonction pour ToBeLine
-        function handleToBeLine() {
-            toBeLineActive = !toBeLineActive;
-            document.getElementById('toBeLineBtn').classList.toggle('active');
-            toggleVisibility("UShape_Ghost", false);
-            window.parent.postMessage(JSON.stringify(message), "*");
-        }
-
-        // Fonction pour lancer l'animation NewLoop
-        function handleAnimation() {
-            const message = {
-                action: "playAnimation",
-                actor: "TOBELine",
-                animation: "NewLoop"
-            };
-            window.parent.postMessage(JSON.stringify(message), "*");
-        }
+            if (data.action === 'play') {
+                startVideo();
+            } else if (data.action === 'reset') {
+                resetVideo();
+            }
+        });
     </script>
 </body>
 </html>

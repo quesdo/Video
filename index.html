@@ -83,7 +83,7 @@
             appId: "1:350569938685:web:38c9fbb279871f32c28894"
         };
 
-        // Initialisation de Firebase
+        // Initialisation Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const videoRef = ref(db, 'video-sync');
@@ -91,7 +91,9 @@
         const playButton = document.getElementById('playButton');
         const resetButton = document.getElementById('resetButton');
         const videoFrame = document.getElementById('videoFrame');
-        const videoUrl = "https://player.vimeo.com/video/1044942414?autoplay=1";
+
+        // URL Vimeo avec paramètres optimisés
+        const videoUrl = "https://player.vimeo.com/video/1044942414?autoplay=1&controls=0&muted=0&dnt=1";
 
         function startVideo() {
             videoFrame.src = videoUrl;
